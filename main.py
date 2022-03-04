@@ -2,6 +2,8 @@ import random
 from tkinter import *
 from tkinter import messagebox
 import pyperclip
+import json
+
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
@@ -29,16 +31,46 @@ def save_pw():
     website = website_input.get()
     username = username_input.get()
     password = password_input.get()
+    new_data = {
+        website: {
+            "username": username,
+            "password": password
+        }}
+
     if len(website) == 0 or len(password) == 0 or len(username) == 0:
         messagebox.showinfo(title="Oops", message="Missing Fields!")
+
     else:
-        is_ok = messagebox.askokcancel(title=website, message=f"Are you sure you want to save?")
-        if is_ok:
-            with open("data.txt", "a") as file:
-                file.write(f"{website} | {username} | {password}\n")
-                website_input.delete(0, END)
-                username_input.delete(0, END)
-                password_input.delete(0, END)
+        try:
+            with open("data.json", "r") as file:
+                # read old data
+                data = json.load(file)
+        except:
+            with open("data.json", "w") as file:
+                json.dump(new_data, file, indent=4)
+        else:
+            data.update(new_data)
+            with open("data.json", "w") as file:
+                json.dump(data, file, indent=4)
+        finally:
+            website_input.delete(0, END)
+            username_input.delete(0, END)
+            password_input.delete(0, END)
+
+# ---------------------------- Searcg ------------------------------- #
+def search_account():
+    website = website_input.get()
+    try:
+        with open("data.json", "r") as file:
+            # read old data
+            data = json.load(file)
+            username = data[website]["username"]
+            password = data[website]["password"]
+    except:
+        print("No Account Found")
+    else:
+        messagebox.showinfo(title="Account Found", message=f"Username: {username} \nPassword: {password}")
+
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -56,7 +88,7 @@ website_text.grid(column=0, row=1)
 
 website_input = Entry(width=35)
 website_input.focus()
-website_input.grid(column=1, row=1, columnspan=2,  sticky="EW")
+website_input.grid(column=1, row=1,  sticky="EW")
 
 username_text = Label(text="Email/Username:")
 username_text.grid(column=0, row=2)
@@ -72,6 +104,9 @@ password_input.grid(column=1, row=3,  sticky="EW")
 
 generate_button = Button(text="Generate Password", command=generate_password)
 generate_button.grid(column=2, row=3)
+
+search_button = Button(text="Seach", command=search_account)
+search_button.grid(column=2, row=1, sticky="EW")
 
 add_button = Button(text="Add", width=36, command=save_pw)
 add_button.grid(column=1, row=4, columnspan=2,  sticky="EW")
